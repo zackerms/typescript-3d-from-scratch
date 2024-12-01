@@ -1,30 +1,35 @@
 import { Matrix } from "./Matrix";
 import { Vector3 } from "./Vector3";
 
-/**
- * カメラクラス
- * 
- */
+export interface CameraParams {
+    position: Vector3;
+    target: Vector3;
+    up: Vector3;
+    fov?: number;
+    aspect?: number;
+    near?: number;
+    far?: number;
+}
+
 export class Camera {
-    /**
-     * 
-     * @param position カメラの位置
-     * @param target カメラの注視点
-     * @param up カメラの上方向
-     * @param fov 視覚角 
-     * @param aspect アスペクト比
-     * @param near ニアクリップ面
-     * @param far ファークリップ面
-     */
+    position: Vector3;
+    target: Vector3;
+    up: Vector3;
+    fov: number;
+    aspect: number;
+    near: number;
+    far: number;
+
     constructor(
-        private position: Vector3, 
-        private target: Vector3, 
-        private up: Vector3,
-        private fov: number = 60,
-        public aspect: number = 1,
-        private near: number = 0.1,
-        private far: number = 1000
+        params: CameraParams
     ) {
+        this.position = params.position;
+        this.target = params.target;
+        this.up = params.up;
+        this.fov = params.fov ?? 60;
+        this.aspect = params.aspect ?? 1;
+        this.near = params.near ?? 0.1;
+        this.far = params.far ?? 100;
     }
 
     // ビュー行列の計算

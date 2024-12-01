@@ -61,12 +61,19 @@ export class Renderer {
         const minY = Math.max(Math.min(p1.y, p2.y, p3.y), 0);
         const maxY = Math.min(Math.max(p1.y, p2.y, p3.y), this.height - 1);
 
-        // エッジ関数を使用してピクセルが三角形の内部にあるかを判定
+        // 三角形の内部のピクセルを描画
         for (let y = minY; y <= maxY; y++) {
             for (let x = minX; x <= maxX; x++) {
                 const p = { x: x + 0.5, y: y + 0.5 }; // ピクセルの中心
 
-                // エッジ関数
+                // エッジ関数を使用してピクセルが三角形の内部にあるかを判定
+                // エッジ関数：三角形を画面上のピクセルに変換する関数
+                // (x1, y1), (x2, y2) はエッジの端点
+                // edge(x, y) = (x - x1) * (y2 - y1) - (y - y1) * (x2 - x1)
+                // 性質
+                //      点が線分の左側にある場合: edge(x, y) > 0
+                //      点が線分の右側にある場合: edge(x, y) < 0
+                //      点が線分上にある場合: edge(x, y) = 0
                 const e1 = (p.x - p2.x) * (p1.y - p2.y) - (p.y - p2.y) * (p1.x - p2.x);
                 const e2 = (p.x - p3.x) * (p2.y - p3.y) - (p.y - p3.y) * (p2.x - p3.x);
                 const e3 = (p.x - p1.x) * (p3.y - p1.y) - (p.y - p1.y) * (p3.x - p1.x);
@@ -80,7 +87,7 @@ export class Renderer {
                     const w3 = 1 - w1 - w2;
 
                     const depth = w1 * p1.z + w2 * p2.z + w3 * p3.z;
-                    const index = y * this.width + x;
+                    const index = Math.floor(y + x * this.height);
 
                     // 深度テスト
                     if (depth < this.depthBuffer[index]) {
@@ -94,7 +101,7 @@ export class Renderer {
     }
 
     // メッシュの描画
-    renderMesh(mesh: Mesh, camera: Camera) {
+    renderMesh(mesh: Mesh, camera: Camera, color: string = '#ffffff') {
         const worldMatrix = mesh.getWorldMatrix();
         const viewMatrix = camera.getViewMatrix();
         const projectionMatrix = camera.getProjectionMatrix();
@@ -116,7 +123,7 @@ export class Renderer {
                 const p1 = this.projectPoint(v1);
                 const p2 = this.projectPoint(v2);
                 const p3 = this.projectPoint(v3);
-                this.drawTriangle(p1, p2, p3, '#ff0000');
+                this.drawTriangle(p1, p2, p3, color);
             }
         }
     }

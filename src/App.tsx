@@ -2,8 +2,8 @@ import React, { ChangeEvent, useCallback, useEffect, useMemo } from 'react';
 import { Renderer } from './models/Renderer';
 import { Mesh } from './models/Mesh';
 import { Vector3 } from './models/Vector3';
-import { Camera } from './models/Camera';
-import {Box, Center, VStack} from '@chakra-ui/react';
+import { Camera, CameraParams } from './models/Camera';
+import { Box, Center, HStack, VStack } from '@chakra-ui/react';
 import {
   Checkbox
 } from './components/ui/checkbox';
@@ -17,6 +17,11 @@ import {
 export default function App() {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const [isWireframe, setIsWireframe] = React.useState(false);
+  const [cameraParams, setCameraParams] = React.useState<CameraParams>({
+    position: new Vector3(0, 0, 5),
+    target: new Vector3(0, 0, 0),
+    up: new Vector3(0, 1, 0),
+  });
   const [canvasContext, setCanvasContext] = React.useState<CanvasRenderingContext2D | null>(null);
 
   const renderer = useMemo(() => {
@@ -28,11 +33,11 @@ export default function App() {
   const camera = useMemo(() => {
     if (!renderer) return null;
 
-    const c = new Camera(
-      new Vector3(0, 0, 5),
-      new Vector3(0, 0, 0),
-      new Vector3(0, 1, 0),
-    );
+    const c = new Camera({
+      position: new Vector3(0, 0, 5),
+      target: new Vector3(0, 0, 0),
+      up: new Vector3(0, 1, 0),
+    });
 
     c.aspect = renderer.width / renderer.height;
     return c;
@@ -70,7 +75,7 @@ export default function App() {
   const render = useCallback((renderer: Renderer, camera: Camera) => {
     renderer.clear();
     cube.rotation.y += 0.01;
-    renderer.renderMesh(cube, camera);
+    renderer.renderMesh(cube, camera, '#ffffff');
     requestAnimationFrame(() => render(renderer, camera));
   }, [cube]);
 
@@ -90,19 +95,30 @@ export default function App() {
     renderer.isWireframe = isWireframe;
   }, [renderer, isWireframe]);
 
+  useEffect(() => {
+    if (!camera) return;
+    camera.fov = cameraParams.fov ?? camera.fov;
+    camera.near = cameraParams.near ?? camera.near;
+    camera.far = cameraParams.far ?? camera.far;
+  }, [camera, cameraParams]);
+
   return (
     <Center w="100%">
       <VStack maxW={900} p="16px">
         <Box borderRadius="20px" overflow="hidden">
           <canvas
-              ref={canvasRef}
-              width={640}
-              height={480}
+            ref={canvasRef}
+            width={640}
+            height={480}
           />
         </Box>
         <Settings
-            isWireframe={isWireframe}
-            onUpdateIsWireframe={(value) => setIsWireframe(value)}
+          isWireframe={isWireframe}
+          onUpdateIsWireframe={(value) => setIsWireframe(value)}
+          cameraParams={cameraParams}
+          onUpdateCameraFov={(value) => setCameraParams({ ...cameraParams, fov: value })}
+          onUpdateCameraNear={(value) => setCameraParams({ ...cameraParams, near: value })}
+          onUpdateCameraFar={(value) => setCameraParams({ ...cameraParams, far: value })}
         />
       </VStack>
     </Center>
@@ -111,10 +127,18 @@ export default function App() {
 
 function Settings({
   isWireframe,
-  onUpdateIsWireframe
+  cameraParams,
+  onUpdateIsWireframe,
+  onUpdateCameraFov,
+  onUpdateCameraNear,
+  onUpdateCameraFar
 }: {
   isWireframe: boolean;
+  cameraParams: CameraParams;
   onUpdateIsWireframe: (value: boolean) => void;
+  onUpdateCameraFov: (value: number) => void;
+  onUpdateCameraNear: (value: number) => void;
+  onUpdateCameraFar: (value: number) => void;
 }) {
   return <AccordionRoot>
     <AccordionItem>
@@ -122,12 +146,37 @@ function Settings({
         Camera
       </AccordionItemTrigger>
       <AccordionItemContent>
-        <Checkbox
-          checked={isWireframe}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => onUpdateIsWireframe(e.target.checked)}
-        >
-          Wireframe
-        </Checkbox>
+        <VStack w="100%">
+          <HStack w="100%" justifyContent="space-between">
+            <label>Wireframe</label>
+            <input
+              type='checkbox'
+              checked={isWireframe}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => onUpdateIsWireframe(e.target.checked)}
+            />
+          </HStack>
+          <HStack w="100%">
+            <label>FOV</label>
+            <input type='range' min={1} max={179} value={cameraParams.fov}
+              style={{ flex: 1 }}
+              onChange={(e) => onUpdateCameraFov(Number(e.target.value))} />
+            <div>{cameraParams.fov}</div>
+          </HStack>
+          <HStack w="100%">
+            <label>Near</label>
+            <input type='range' min={0.1} max={10} step={0.1} value={cameraParams.near}
+              style={{ flex: 1 }}
+              onChange={(e) => onUpdateCameraNear(Number(e.target.value))} />
+            <div>{cameraParams.near}</div>
+          </HStack>
+          <HStack w="100%">
+            <label>Far</label>
+            <input type='range' min={1} max={100} value={cameraParams.far}
+              style={{ flex: 1 }}
+              onChange={(e) => onUpdateCameraFar(Number(e.target.value))} />
+            <div>{cameraParams.far}</div>
+          </HStack>
+        </VStack>
       </AccordionItemContent>
     </AccordionItem>
   </AccordionRoot>
