@@ -6,7 +6,9 @@ export class Matrix {
   }
 
   multiply(matrix: Matrix) {
-    const result = new Array(this.size).fill(0).map(() => new Array(matrix.size).fill(0));
+    const result = new Array(this.size)
+      .fill(0)
+      .map(() => new Array(matrix.size).fill(0));
 
     for (let i = 0; i < this.size; i++) {
       for (let j = 0; j < matrix.size; j++) {

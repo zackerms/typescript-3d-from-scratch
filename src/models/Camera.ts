@@ -53,7 +53,12 @@ export class Camera {
     return new Matrix([
       [f / this.aspect, 0, 0, 0],
       [0, f, 0, 0],
-      [0, 0, (this.near + this.far) * rangeInv, 2 * this.near * this.far * rangeInv],
+      [
+        0,
+        0,
+        (this.near + this.far) * rangeInv,
+        2 * this.near * this.far * rangeInv,
+      ],
       [0, 0, -1, 0],
     ]);
   }

@@ -1,14 +1,29 @@
+import { Material } from "./Material";
 import { Matrix } from "./Matrix";
 import { Vector3 } from "./Vector3";
 
+export interface MeshProperties {
+  vertices: Vector3[];
+  indices: number[][];
+  normals: Vector3[];
+  material: Material;
+}
+
 export class Mesh {
-  constructor(
-    public vertices: Vector3[],
-    public indices: number[][],
-    public position: Vector3 = new Vector3(),
-    public rotation: Vector3 = new Vector3(),
-    public scale: Vector3 = new Vector3(1, 1, 1),
-  ) { }
+  public vertices: Vector3[];
+  public indices: number[][];
+  public normals: Vector3[];
+  public position: Vector3 = Vector3.zero();
+  public rotation: Vector3 = Vector3.zero();
+  public scale: Vector3 = new Vector3({ x: 1, y: 1, z: 1 });
+  public material: Material = new Material({});
+
+  constructor(properties: MeshProperties) {
+    this.vertices = properties.vertices;
+    this.indices = properties.indices;
+    this.normals = properties.normals;
+    this.material = properties.material;
+  }
 
   getWorldMatrix(): Matrix {
     const cx = Math.cos(this.rotation.x);
@@ -26,9 +41,36 @@ export class Mesh {
     ];
 
     return new Matrix([
-      [rotationMatrix[0][0] * this.scale.x, rotationMatrix[0][1] * this.scale.y, rotationMatrix[0][2] * this.scale.z, this.position.x],
-      [rotationMatrix[1][0] * this.scale.x, rotationMatrix[1][1] * this.scale.y, rotationMatrix[1][2] * this.scale.z, this.position.y],
-      [rotationMatrix[2][0] * this.scale.x, rotationMatrix[2][1] * this.scale.y, rotationMatrix[2][2] * this.scale.z, this.position.z],
+      [
+        rotationMatrix[0][0] * this.scale.x,
+        rotationMatrix[0][1] * this.scale.y,
+        rotationMatrix[0][2] * this.scale.z,
+        this.position.x,
+      ],
+      [
+        rotationMatrix[1][0] * this.scale.x,
+        rotationMatrix[1][1] * this.scale.y,
+        rotationMatrix[1][2] * this.scale.z,
+        this.position.y,
+      ],
+      [
+        rotationMatrix[2][0] * this.scale.x,
+        rotationMatrix[2][1] * this.scale.y,
+        rotationMatrix[2][2] * this.scale.z,
+        this.position.z,
+      ],
+      [0, 0, 0, 1],
+    ]);
+  }
+
+  // 法線変換行列の計算
+  getNormalMatrix(worldMatrix: Matrix) {
+    const mtx = worldMatrix.data;
+    // 平行移動成分を除去
+    return new Matrix([
+      [mtx[0][0], mtx[0][1], mtx[0][2], 0],
+      [mtx[1][0], mtx[1][1], mtx[1][2], 0],
+      [mtx[2][0], mtx[2][1], mtx[2][2], 0],
       [0, 0, 0, 1],
     ]);
   }
