@@ -19,6 +19,7 @@ export class Renderer {
   clear() {
     this.ctx.fillStyle = this.clearColor;
     this.ctx.fillRect(0, 0, this.width, this.height);
+    this.depthBuffer.fill(Infinity);    
   }
 
   drawPoint(x: number, y: number, color: string = "#ffffff") {
@@ -75,7 +76,7 @@ export class Renderer {
 
         // 全てのエッジ関数が同じ符号なら、ピクセルは三角形の内部
         if ((e1 >= 0 && e2 >= 0 && e3 >= 0) || (e1 <= 0 && e2 <= 0 && e3 <= 0)) {
-          // 深度値の補間
+          // 深度値(各ピクセルがカメラからどれだけ離れているか)の補間
           const area = Math.abs((p2.x - p1.x) * (p3.y - p1.y) - (p3.x - p1.x) * (p2.y - p1.y));
           const w1 = Math.abs((p.x - p2.x) * (p3.y - p2.y) - (p3.x - p2.x) * (p.y - p2.y)) / area;
           const w2 = Math.abs((p.x - p3.x) * (p1.y - p3.y) - (p1.x - p3.x) * (p.y - p3.y)) / area;
@@ -84,7 +85,7 @@ export class Renderer {
           const depth = w1 * p1.z + w2 * p2.z + w3 * p3.z;
           const index = Math.floor(y + x * this.height);
 
-          // 深度テスト
+          // 深度テスト（現在の深度値と比較して手前にある場合のみ描画）
           if (depth < this.depthBuffer[index]) {
             this.depthBuffer[index] = depth;
             this.ctx.fillStyle = color;
@@ -99,7 +100,7 @@ export class Renderer {
   renderMesh(mesh: Mesh, camera: Camera, color: string = "#ffffff") {
     const worldMatrix = mesh.getWorldMatrix();
     const viewMatrix = camera.getViewMatrix();
-    const projectionMatrix = camera.getProjectionMatrix();
+    const projectionMatrix = camera.getProjectionMatrix(); 
 
     // 変換行列の合成
     const transformMatrix = projectionMatrix.multiply(viewMatrix).multiply(worldMatrix);

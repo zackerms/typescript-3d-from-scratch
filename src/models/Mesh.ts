@@ -8,17 +8,27 @@ export class Mesh {
     public position: Vector3 = new Vector3(),
     public rotation: Vector3 = new Vector3(),
     public scale: Vector3 = new Vector3(1, 1, 1),
-  ) {}
+  ) { }
 
   getWorldMatrix(): Matrix {
-    // 簡略化のため、Y軸周りの回転のみ実装
-    const cosY = Math.cos(this.rotation.y);
-    const sinY = Math.sin(this.rotation.y);
+    const cx = Math.cos(this.rotation.x);
+    const sx = Math.sin(this.rotation.x);
+    const cy = Math.cos(this.rotation.y);
+    const sy = Math.sin(this.rotation.y);
+    const cz = Math.cos(this.rotation.z);
+    const sz = Math.sin(this.rotation.z);
+
+    const rotationMatrix = [
+      [cy * cz, -cy * sz, sy, 0],
+      [sx * sy * cz + cx * sz, -sx * sy * sz + cx * cz, -sx * cy, 0],
+      [-cx * sy * cz + sx * sz, cx * sy * sz + sx * cz, cx * cy, 0],
+      [0, 0, 0, 1],
+    ];
 
     return new Matrix([
-      [cosY * this.scale.x, 0, sinY * this.scale.z, this.position.x],
-      [0, this.scale.y, 0, this.position.y],
-      [-sinY * this.scale.x, 0, cosY * this.scale.z, this.position.z],
+      [rotationMatrix[0][0] * this.scale.x, rotationMatrix[0][1] * this.scale.y, rotationMatrix[0][2] * this.scale.z, this.position.x],
+      [rotationMatrix[1][0] * this.scale.x, rotationMatrix[1][1] * this.scale.y, rotationMatrix[1][2] * this.scale.z, this.position.y],
+      [rotationMatrix[2][0] * this.scale.x, rotationMatrix[2][1] * this.scale.y, rotationMatrix[2][2] * this.scale.z, this.position.z],
       [0, 0, 0, 1],
     ]);
   }
