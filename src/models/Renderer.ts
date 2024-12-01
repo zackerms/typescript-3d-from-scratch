@@ -3,19 +3,15 @@ import { Mesh } from "./Mesh";
 import { Vector3 } from "./Vector3";
 
 export class Renderer {
-    private ctx: CanvasRenderingContext2D;
-    public width: number;
-    public height: number;
     private depthBuffer: Float32Array;
     public isWireframe: boolean;
     
     constructor(
-        private canvas: HTMLCanvasElement,
+        private ctx: CanvasRenderingContext2D,
+        public width: number,
+        public height: number,
         private clearColor: string = '#000000',
     ) {
-        this.ctx = this.canvas.getContext('2d')!;
-        this.width = this.canvas.width;
-        this.height = this.canvas.height
         this.depthBuffer = new Float32Array(this.width * this.height).fill(Infinity);
         this.isWireframe = false;
     }
