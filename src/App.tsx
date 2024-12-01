@@ -65,12 +65,14 @@ export default function App() {
       new Light({
         position: new Vector3({ x: -5, y: 5, z: 5 }),
         color: new Color(0, 0.2, 1),
-        intensity: 1.2,
+        intensity: 1.0,
+        range: 35,
       }),
       new Light({
-        position: new Vector3({ x: 5, y: -3, z: 3 }),
+        position: new Vector3({ x: 5, y: -3, z: 5 }),
         color: new Color(1.0, 0.1, 0.1),
-        intensity: 1.0,
+        intensity: 0.8,
+        range: 15,
       }),
     ];
   }, []);

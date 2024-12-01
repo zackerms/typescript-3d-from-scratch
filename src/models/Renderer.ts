@@ -61,7 +61,12 @@ export class Renderer {
     finalColor = finalColor.add(ambientColor);
 
     for (const light of lights) {
-      const lightDir = light.position.subtract(point).normalize();
+        const lightVector = light.position.subtract(point);
+        const distance = lightVector.length();
+        const lightDir = lightVector.normalize();
+
+        // 距離に応じた減衰
+      const attenuation = 1.0 / (1.0 + Math.pow(distance / light.range, 2));
 
       // 拡散反射光
       const diffuseFactor = Math.max(normal.dot(lightDir), 0);
@@ -85,8 +90,8 @@ export class Renderer {
       // color = ambient + diffuse * intensity + specular * intensity
       finalColor = finalColor.add(
         diffuseColor
-          .multiply(light.intensity)
-          .add(specularColor.multiply(light.intensity)),
+          .multiply(light.intensity * attenuation)
+          .add(specularColor.multiply(light.intensity * attenuation)),
       );
     }
 
