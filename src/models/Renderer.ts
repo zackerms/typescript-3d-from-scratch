@@ -269,31 +269,46 @@ export class Renderer {
 
     // 各面を描画
     for (const indices of mesh.indices) {
-      // 頂点の変換
-      const v1 = mesh.vertices[indices[0]].transform(transformMatrix);
-      const v2 = mesh.vertices[indices[1]].transform(transformMatrix);
-      const v3 = mesh.vertices[indices[2]].transform(transformMatrix);
+      // ワールド空間での頂点位置を計算
+      const worldPos1 = mesh.vertices[indices[0]].transform(worldMatrix);
+      const worldPos2 = mesh.vertices[indices[1]].transform(worldMatrix);
+      const worldPos3 = mesh.vertices[indices[2]].transform(worldMatrix);
 
-      // クリップ空間への変換
-      const clipPos1 = v1.transform(transformMatrix);
-      const clipPos2 = v2.transform(transformMatrix);
-      const clipPos3 = v3.transform(transformMatrix);
+      // ワールド空間での面法線を計算
+      const edge1 = worldPos2.subtract(worldPos1);
+      const edge2 = worldPos3.subtract(worldPos1);
+      const faceNormal = edge1.cross(edge2).normalize();
 
-      // 背面カリング: 視点から見えない面（裏面）を描画から除外する処理
-      const edge1 = clipPos2.subtract(clipPos1);
-      const edge2 = clipPos3.subtract(clipPos1);
-      const normal = edge1.cross(edge2);
-      if (normal.z > -Renderer.EPSILON) {
-        // スクリーン座標に変換して描画
+      // カメラから面の中心への視線ベクトル
+      const faceCenter = worldPos1.add(worldPos2).add(worldPos3).multiply(1 / 3);
+      const viewDirection = camera.position.subtract(faceCenter).normalize();
+
+      /**
+       * 背面カリング Back-face Culling
+       * カメラから見て裏側になっている面を描画しないようにする処理です。
+       * 
+       * 基本的な考え方
+       * 1. 面の表裏判定
+       *    - 3D空間では面に表と裏がある
+       *    - 表裏は面の法線ベクトル（面に向かって垂直なベクトル）の向きで決まる
+       *    - 法線ベクトルは面から外側に向かって伸びる
+       * 2. 視線ベクトル（View Direction)
+       *   - カメラから見た面の中心へ向かうベクトル
+       *   - 視線ベクトルと法線ベクトルの向きの関係で、その面が表面か裏面かを判定できる
+       *   - 視線ベクトルと法線ベクトルの内積が正の場合（同じ方向を向いている場合）、面は表面 
+       */
+      if (faceNormal.dot(viewDirection) > 0) {
+        // クリップ空間への変換
+        const v1 = mesh.vertices[indices[0]].transform(transformMatrix);
+        const v2 = mesh.vertices[indices[1]].transform(transformMatrix);
+        const v3 = mesh.vertices[indices[2]].transform(transformMatrix);
+
+        // スクリーン座標に変換
         const p1 = this.projectPoint(v1);
         const p2 = this.projectPoint(v2);
         const p3 = this.projectPoint(v3);
 
-        // ワールド座標での頂点位置
-        const worldPos1 = v1.transform(worldMatrix);
-        const worldPos2 = v2.transform(worldMatrix);
-        const worldPos3 = v3.transform(worldMatrix);
-
+        // 法線の変換
         const n1 = mesh.normals[indices[0]].transform(normalMatrix);
         const n2 = mesh.normals[indices[1]].transform(normalMatrix);
         const n3 = mesh.normals[indices[2]].transform(normalMatrix);
