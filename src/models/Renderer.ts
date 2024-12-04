@@ -283,7 +283,7 @@ export class Renderer {
       const edge1 = clipPos2.subtract(clipPos1);
       const edge2 = clipPos3.subtract(clipPos1);
       const normal = edge1.cross(edge2);
-      if (normal.z < Renderer.EPSILON) {
+      if (normal.z > -Renderer.EPSILON) {
         // スクリーン座標に変換して描画
         const p1 = this.projectPoint(v1);
         const p2 = this.projectPoint(v2);
