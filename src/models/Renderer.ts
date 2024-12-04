@@ -9,6 +9,8 @@ export class Renderer {
   private depthBuffer: Float32Array;
   public isWireframe: boolean;
 
+  private static EPSILON = 0.00001;
+
   constructor(
     private ctx: CanvasRenderingContext2D,
     public width: number,
@@ -61,11 +63,11 @@ export class Renderer {
     finalColor = finalColor.add(ambientColor);
 
     for (const light of lights) {
-        const lightVector = light.position.subtract(point);
-        const distance = lightVector.length();
-        const lightDir = lightVector.normalize();
+      const lightVector = light.position.subtract(point);
+      const distance = lightVector.length();
+      const lightDir = lightVector.normalize();
 
-        // 距離に応じた減衰
+      // 距離に応じた減衰
       const attenuation = 1.0 / (1.0 + Math.pow(distance / light.range, 2));
 
       // 拡散反射光
@@ -153,10 +155,14 @@ export class Renderer {
     }
 
     // 三角形を囲む矩形の範囲を計算
-    const minX = Math.max(Math.min(p1.x, p2.x, p3.x), 0);
-    const maxX = Math.min(Math.max(p1.x, p2.x, p3.x), this.width - 1);
-    const minY = Math.max(Math.min(p1.y, p2.y, p3.y), 0);
-    const maxY = Math.min(Math.max(p1.y, p2.y, p3.y), this.height - 1);
+    const minX = Math.floor(Math.max(Math.min(p1.x, p2.x, p3.x), 0));
+    const maxX = Math.ceil(
+      Math.min(Math.max(p1.x, p2.x, p3.x), this.width - 1),
+    );
+    const minY = Math.floor(Math.max(Math.min(p1.y, p2.y, p3.y), 0));
+    const maxY = Math.ceil(
+      Math.min(Math.max(p1.y, p2.y, p3.y), this.height - 1),
+    );
 
     // 三角形の内部のピクセルを描画
     for (let y = minY; y <= maxY; y++) {
@@ -177,8 +183,12 @@ export class Renderer {
 
         // 全てのエッジ関数が同じ符号なら、ピクセルは三角形の内部
         if (
-          (e1 >= 0 && e2 >= 0 && e3 >= 0) ||
-          (e1 <= 0 && e2 <= 0 && e3 <= 0)
+          (e1 >= -Renderer.EPSILON &&
+            e2 >= -Renderer.EPSILON &&
+            e3 >= -Renderer.EPSILON) ||
+          (e1 <= Renderer.EPSILON &&
+            e2 <= Renderer.EPSILON &&
+            e3 <= Renderer.EPSILON)
         ) {
           // 深度値(各ピクセルがカメラからどれだけ離れているか)の補間
           const area = Math.abs(
@@ -195,7 +205,7 @@ export class Renderer {
           const w3 = 1 - w1 - w2;
 
           const depth = w1 * p1.z + w2 * p2.z + w3 * p3.z;
-          const index = Math.round(y * this.height + x);
+          const index = y * Math.round(this.width) + x;
 
           // 深度テスト（現在の深度値と比較して手前にある場合のみ描画）
           if (depth < this.depthBuffer[index]) {
@@ -269,12 +279,11 @@ export class Renderer {
       const clipPos2 = v2.transform(transformMatrix);
       const clipPos3 = v3.transform(transformMatrix);
 
-      // 背面カリング（簡易的な実装）
+      // 背面カリング: 視点から見えない面（裏面）を描画から除外する処理
       const edge1 = clipPos2.subtract(clipPos1);
       const edge2 = clipPos3.subtract(clipPos1);
       const normal = edge1.cross(edge2);
-
-      if (normal.z < 0) {
+      if (normal.z < Renderer.EPSILON) {
         // スクリーン座標に変換して描画
         const p1 = this.projectPoint(v1);
         const p2 = this.projectPoint(v2);
@@ -285,7 +294,6 @@ export class Renderer {
         const worldPos2 = v2.transform(worldMatrix);
         const worldPos3 = v3.transform(worldMatrix);
 
-        console.log(normalMatrix.data[3][0]);
         const n1 = mesh.normals[indices[0]].transform(normalMatrix);
         const n2 = mesh.normals[indices[1]].transform(normalMatrix);
         const n3 = mesh.normals[indices[2]].transform(normalMatrix);
