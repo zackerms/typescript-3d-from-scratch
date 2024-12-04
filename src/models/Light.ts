@@ -12,7 +12,7 @@ export class Light {
   position: Vector3;
   color: Color;
   intensity: number;
-  range: number
+  range: number;
 
   constructor(properties: LightProperties) {
     this.position = properties.position;
